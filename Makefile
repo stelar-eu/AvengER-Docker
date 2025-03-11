@@ -1,4 +1,3 @@
-
 DOCKER=docker
 IMGTAG=alzeakis/avenger:v0.0
 IMGPATH=.

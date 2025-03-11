@@ -19,6 +19,9 @@ AvengER can be executed from the KLMS with the following input json:
 		"sample_file": [
 			"XXXXXXXX-bucket/sample.csv"
 		],
+		"ground_truth_file": [
+			"XXXXXXXX-bucket/gt.csv"
+		],		
 	},
 	"output": {
 		"prompts": "/path/to/write/the/file",
@@ -31,7 +34,10 @@ AvengER can be executed from the KLMS with the following input json:
         "model": "llama3-8b-8192",
         "examples": "None",
         "experts": "None",
-        "reverse": False
+        "reverse": False,
+        "blocking_k": 10,
+        "blocking_method": "intersection",
+        "device": "cpu"
     },
     "secrets": {
         "endpoint": "Endpoint/of/LLM"
@@ -56,6 +62,9 @@ AvengER can be executed from the KLMS with the following input json:
 
 - **`sample_file`** *(str, optional)*  
   Path to a sample file for example selection or matching. If not provided, blocking with `k=10` will be executed.  
+  
+- **`ground_truth_file`** *(str, optional)*    
+  Path to the file containing the true_pairs.
 
 ### Parameters  
 
@@ -90,6 +99,22 @@ AvengER can be executed from the KLMS with the following input json:
 - **`reverse`** *(bool, optional, default=False)*  
   Whether to generate a reverse prompt. Applies only to `"MATCH"` and `"COMPARE"` task descriptions.  
 
+- **`blocking_k`** *(int, optional, default=10)*  
+  Number of nearest neighbors to consider during blocking. Used when no `sample_file` is provided.  
+  
+- **`blocking_method`** *(str, optional, default="intersection")*  
+  Strategy used for blocking. Options include:  
+  - `"left_to_right"` – Considers only candidates where entities from the left file are matched to the right.  
+  - `"right_to_left"` – Considers only candidates where entities from the right file are matched to the left.  
+  - `"intersection"` (default) – Retains entity pairs appearing in multiple blocking methods.  
+  - `"union"` – Combines all candidate pairs from different blocking methods.  
+
+- **`device`** *(str, optional, default="cpu")*  
+  Specifies the computing device to use for model inference. Options include:  
+  - `"cpu"` – Runs the model on the CPU.  
+  - `"cuda"` – Uses a GPU for faster processing (if available).  
+
+
 
 ## Output
 
@@ -106,8 +131,13 @@ The output of AvengER has the following format:
         "recall": 1.0,
         "precision": 1.0,
         "f1": 1.0,
-        "time": 1.698042631149292,
-        "size": 70.0
+        "time": 1.698,
+        "size": 70.0,
+        "vect_time": 4.447, 
+        "blocking_time": 0.615, 
+        "blocking_precision": 0.15,
+        "blocking_recall": 0.95,
+        "blocking_f1": 0.26 
     },
 	"status": "success"
 }

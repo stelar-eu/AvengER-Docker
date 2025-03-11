@@ -8,4 +8,4 @@ COPY . /app/
 RUN pip install --no-cache-dir -r requirements.txt
 RUN chmod +x run.sh
 ENTRYPOINT ["./run.sh"]
-#ENTRYPOINT ["ls", "-al"]
+#ENTRYPOINT ["python", "main.py", "input.json", "output.json"]

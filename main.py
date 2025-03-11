@@ -6,6 +6,9 @@ import subprocess
 from evaluate_responses import calc_scores
 from build_prompt import build_prompt
 from run_prompt import run_prompt
+from serialization import serialize
+from blocking import blocking
+import os
 
 def run(json):
 
@@ -29,13 +32,35 @@ def run(json):
         log = mc.get_object(json["inputs"]['right_file'][0], 'right_file.csv')
         if 'error' in log:
             raise ValueError(log['error'])
+            
+        if 'ground_truth_file' in json["inputs"]:
+            log = mc.get_object(json["inputs"]['ground_truth_file'][0], 'gt.csv')
+            if 'error' in log:
+                raise ValueError(log['error'])
        
         if 'sample_file' not in json["inputs"]: # perform blocking
-            pass
+            if not os.path.exists('gt.csv'):
+                raise ValueError('Please provide a Ground Truth File')
+        
+            device = json["parameters"].get("device", "cpu")
+            blocking_k = json['parameters'].get('blocking_k', 10)
+            blocking_method = json['parameters'].get('blocking_method', 'intersection')
+            log = serialize('left_file.csv', device)
+            vect_time = log['time']
+            log = serialize('right_file.csv', device)
+            vect_time += log['time']
+            log = blocking('left_file_sgtrt5.csv', 'right_file_sgtrt5.csv', 'gt.csv',
+                           blocking_method, device, blocking_k)
+            block_metrics = {'vect_time': vect_time, 'blocking_time': log['blocking_time'],
+                            'blocking_precision': log['blocking_precision'],
+                            'blocking_recall': log['blocking_recall'],
+                            'blocking_f1': log['blocking_f1']}
+            if 'sample_file' in json['outputs']:
+                mc.put_object(json['outputs']['sample_file'], 'sample_file.csv')
         else:
             log = mc.get_object(json["inputs"]['sample_file'][0], 'sample_file.csv')
             if 'error' in log:
-                raise ValueError(log['error'])            
+                raise ValueError(log['error'])   
         
         args = {
             "left_file": 'left_file.csv', "right_file": 'right_file.csv',
@@ -70,6 +95,9 @@ def run(json):
         
         #Evaluate Responses
         metrics = calc_scores('responses.jsonl', j['parameters']['model'])
+        if block_metrics is not None:
+            for k,v in block_metrics.items():
+                metrics[k] = v
 
         json= {
                 'message': 'Tool Executed Succesfully',

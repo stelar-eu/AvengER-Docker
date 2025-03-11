@@ -57,7 +57,11 @@ def put_object(object_path: str, file_path: str):
             return {"error": f"The specified file does not exist: {file_path}"}
         
         # Split object_path into bucket and object name
-        bucket_name, object_name = object_path.split('/', 1)
+        # bucket_name, object_name = object_path.split('/', 1)
+        if '://' in object_path:
+           bucket_name, object_name = object_path.split('/', 2)[2].split('/', 1)
+        else:
+           bucket_name, object_name = object_path.split('/', 1)
         file_stat = os.stat(file_path)
         with open(file_path, 'rb') as file_data:
             mclient.put_object(
@@ -97,7 +101,11 @@ def get_object(object_path: str, file_path: str):
 
     try:
         # Split object_path into bucket and object name
-        bucket_name, object_name = object_path.split('/', 1)
+        # bucket_name, object_name = object_path.split('/', 1)
+        if '://' in object_path:
+           bucket_name, object_name = object_path.split('/', 2)[2].split('/', 1)
+        else:
+           bucket_name, object_name = object_path.split('/', 1)
    
         response = mclient.get_object(bucket_name, object_name)
         with open(file_path, 'wb') as file_data:

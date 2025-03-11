@@ -1,6 +1,6 @@
 
 DOCKER=docker
-IMGTAG=yourusername/yourimagereponame:yourversiontag
+IMGTAG=alzeakis/avenger:v0.0
 IMGPATH=.
 DOCKERFILE=$(IMGPATH)/Dockerfile
 
